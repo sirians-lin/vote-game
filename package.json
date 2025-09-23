@@ -1,0 +1,20 @@
+﻿{
+  "name": "realtime-vote",
+  "version": "1.0.0",
+  "description": "即時投票遊戲：函稿裡到底藏了多少問題呢？",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

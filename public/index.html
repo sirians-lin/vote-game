@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>函稿裡到底藏了多少問題呢？</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <h1>函稿裡到底藏了多少問題呢？</h1>
+        <p class="subtitle">用手機掃描即可即時投票，看看大家的直覺答案！</p>
+    </header>
+
+    <main class="layout" id="app">
+        <section class="panel choices" aria-labelledby="choice-title">
+            <h2 id="choice-title">你覺得這份函稿裡面可能有幾個問題？</h2>
+            <p class="hint">每人僅能投一次，謹慎選擇唷！</p>
+            <div class="choices-grid" id="choiceGrid" role="group" aria-label="投票選項"></div>
+            <p class="status-message" id="voteStatus" aria-live="polite"></p>
+        </section>
+
+        <section class="panel stats" aria-labelledby="stats-title">
+            <h2 id="stats-title">即時統計</h2>
+            <p class="total">總投票數：<span id="totalCount">0</span></p>
+            <div class="stats-list" id="statsList" aria-live="polite"></div>
+        </section>
+    </main>
+    <section id="adminControls" class="panel admin-controls" hidden>
+        <h2>管理員區</h2>
+        <p class="admin-hint">此區僅供授課老師使用。請輸入管理密碼後可重置統計。</p>
+        <button type="button" id="resetVotesButton" class="admin-reset-button">重置投票結果</button>
+        <p id="adminStatus" class="admin-status" aria-live="polite"></p>
+    </section>
+
+
+    <footer class="site-footer">
+        <p>提示：同一個匿名 ID 只能投一次，如果裝置已投過請改用另一支手機參與。</p>
+    </footer>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js" defer></script>
+</body>
+</html>

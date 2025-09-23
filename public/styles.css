@@ -1,0 +1,255 @@
+﻿:root {
+    --bg: #f0f7ff;
+    --panel-bg: rgba(255, 255, 255, 0.85);
+    --accent: #4c8bf5;
+    --accent-strong: #2f6ad9;
+    --lock: #a8b4cc;
+    --danger: #ff6b6b;
+    --text: #1b2845;
+    --muted: #6c7a99;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: linear-gradient(180deg, #e8f2ff 0%, #f9fdff 100%);
+    color: var(--text);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+}
+
+.site-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.site-header h1 {
+    font-size: 1.8rem;
+    margin: 0 0 8px;
+}
+
+.subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.layout {
+    width: 100%;
+    max-width: 1080px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.panel {
+    background: var(--panel-bg);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(76, 139, 245, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.choices h2, .stats h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+}
+
+.hint {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.choices-grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.choice-button {
+    min-height: 48px;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: #fff;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    color: var(--accent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border 0.15s ease;
+    cursor: pointer;
+}
+
+.choice-button:disabled {
+    background: var(--lock);
+    color: #fff;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    border-color: transparent;
+}
+
+.choice-button.chosen,
+.choice-button.chosen:disabled {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-strong);
+}
+
+.choice-button:hover,
+.choice-button:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(76, 139, 245, 0.25);
+    border-color: var(--accent);
+    outline: none;
+}
+
+.status-message {
+    margin-top: 16px;
+    min-height: 24px;
+    font-weight: 600;
+    color: var(--danger);
+}
+
+.stats .total {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-item {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: var(--muted);
+    text-align: right;
+}
+
+.stat-bar {
+    position: relative;
+    height: 18px;
+    background: rgba(76, 139, 245, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.stat-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--percent, 0%);
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+    transition: width 0.3s ease;
+}
+
+.stat-count {
+    font-weight: 700;
+    text-align: left;
+}
+
+.site-footer {
+    margin-top: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+@media (min-width: 768px) {
+    body {
+        padding: 32px;
+    }
+
+    .layout {
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .choices {
+        flex: 0 0 360px;
+    }
+
+    .stats {
+        flex: 1;
+    }
+
+    .choices-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .choices-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+.admin-controls {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-controls h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.admin-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.admin-reset-button {
+    align-self: flex-start;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--danger);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-reset-button:hover,
+.admin-reset-button:focus-visible {
+    background: #ff4c4c;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.admin-status {
+    min-height: 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
