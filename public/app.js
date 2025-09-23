@@ -273,16 +273,6 @@
             return;
         }
 
-        const params = new URLSearchParams(window.location.search);
-        const isTeacher = params.get('teacher') === '1';
-
-        if (!isTeacher) {
-            adminControls.remove();
-            return;
-        }
-
-        adminControls.hidden = false;
-
         if (adminResetButton) {
             adminResetButton.addEventListener('click', handleAdminReset);
         }
