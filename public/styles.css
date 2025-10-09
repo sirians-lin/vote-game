@@ -34,6 +34,97 @@ body {
     margin-bottom: 20px;
 }
 
+.holding-body {
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.holding {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(76, 139, 245, 0.18);
+    padding: 32px 28px;
+}
+
+.holding h1 {
+    margin: 0 0 16px;
+    font-size: 1.6rem;
+}
+
+.holding-message {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 1rem;
+}
+
+.holding-admin {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+
+.holding-label {
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.holding-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(76, 139, 245, 0.28);
+    border-radius: 12px;
+    font-size: 1rem;
+}
+
+.holding-admin-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.holding-button {
+    flex: 1 1 120px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: none;
+    background: var(--lock);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.holding-button.primary {
+    background: var(--accent);
+}
+
+.holding-button:hover,
+.holding-button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(76, 139, 245, 0.25);
+    outline: none;
+}
+
+.holding-button.primary:hover,
+.holding-button.primary:focus-visible {
+    background: var(--accent-strong);
+}
+
+.holding-status {
+    min-height: 20px;
+    font-size: 0.95rem;
+    color: var(--muted);
+}
+
+.holding-status[data-state="error"] {
+    color: var(--danger);
+}
+
 .question-hero {
     margin: 12px 0 16px;
 }

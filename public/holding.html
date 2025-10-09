@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本活動尚未開放 Coming Soon～</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="holding-body">
+    <main class="holding" aria-labelledby="holdingTitle">
+        <h1 id="holdingTitle">本活動尚未開放 Coming Soon～</h1>
+        <p class="holding-message">請於課程開始前數分鐘再重新整理頁面。</p>
+
+        <section class="holding-admin" aria-labelledby="holdingAdminTitle">
+            <h2 id="holdingAdminTitle">管理員快速開關</h2>
+            <label for="adminPwdHolding" class="holding-label">管理員密碼</label>
+            <input type="password" id="adminPwdHolding" class="holding-input" autocomplete="current-password" placeholder="請輸入密碼">
+            <div class="holding-admin-actions">
+                <button type="button" id="btnOpenHolding" class="holding-button primary">開站</button>
+                <button type="button" id="btnCloseHolding" class="holding-button">關站</button>
+            </div>
+            <p id="holdingStatus" class="holding-status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            const passwordInput = document.getElementById('adminPwdHolding');
+            const openBtn = document.getElementById('btnOpenHolding');
+            const closeBtn = document.getElementById('btnCloseHolding');
+            const statusEl = document.getElementById('holdingStatus');
+
+            function setStatus(message, isError) {
+                if (!statusEl) {
+                    return;
+                }
+                statusEl.textContent = message || '';
+                statusEl.dataset.state = isError ? 'error' : 'ok';
+            }
+
+            function getPassword() {
+                return passwordInput ? passwordInput.value.trim() : '';
+            }
+
+            function sendToggle(path) {
+                const password = getPassword();
+                if (!password) {
+                    setStatus('請輸入管理員密碼。', true);
+                    return;
+                }
+
+                setStatus('處理中…', false);
+                fetch(path, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                })
+                    .then((response) => response.json().catch(() => ({})))
+                    .then((payload) => {
+                        if (payload && payload.ok) {
+                            if (path.endsWith('open')) {
+                                setStatus('站台已開啟，重新導向中…', false);
+                                window.location.href = '/';
+                            } else {
+                                setStatus('站台已關閉。', false);
+                            }
+                        } else {
+                            setStatus('操作失敗，請確認密碼。', true);
+                        }
+                    })
+                    .catch(() => {
+                        setStatus('連線失敗，請稍後再試。', true);
+                    });
+            }
+
+            if (openBtn) {
+                openBtn.addEventListener('click', () => sendToggle('/admin/open'));
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => sendToggle('/admin/close'));
+            }
+        }());
+    </script>
+</body>
+</html>

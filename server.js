@@ -14,8 +14,11 @@ const SOCKET_RATE_LIMIT_MAX = 10;
 const PERSIST_TO_JSON = process.env.USE_JSON_PERSISTENCE === 'true';
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'votes.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const HOLDING_FILE = path.join(PUBLIC_DIR, 'holding.html');
 const ADMIN_RESET_PASSWORD = process.env.RESET_PASSWORD || 'adm123';
 const TOKEN_BATCH_SIZE = parseInt(process.env.TOKEN_BATCH_SIZE || '40', 10);
+let isOpen = process.env.SITE_OPEN === '1';
 
 const app = express();
 const server = http.createServer(app);
@@ -32,14 +35,82 @@ const usedTokens = new Set();
 const claimedByDevice = new Map();
 const voteAttemptsBySocket = new Map();
 
+console.log('Site initial state:', isOpen ? 'OPEN' : 'CLOSED');
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use((req, res, next) => {
+  if (isOpen) {
+    next();
+    return;
+  }
+
+  if (isAdminTogglePath(req)) {
+    next();
+    return;
+  }
+
+  if (isAllowedWhileClosed(req)) {
+    next();
+    return;
+  }
+
+  if (req.path.startsWith('/socket.io/')) {
+    res.status(503).json({ ok: false, error: 'site_closed' });
+    return;
+  }
+
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    res.sendFile(HOLDING_FILE);
+    return;
+  }
+
+  res.status(503).json({ ok: false, error: 'site_closed' });
+});
+app.use(express.static(PUBLIC_DIR));
 
 app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
+app.post('/admin/open', (req, res) => {
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  if (password !== ADMIN_RESET_PASSWORD) {
+    res.status(401).json({ ok: false, error: 'invalid_password' });
+    return;
+  }
+
+  if (!isOpen) {
+    isOpen = true;
+    io.emit('site-state', { open: true });
+    console.log('Site state changed to OPEN');
+  }
+
+  res.json({ ok: true, open: true });
+});
+
+app.post('/admin/close', (req, res) => {
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  if (password !== ADMIN_RESET_PASSWORD) {
+    res.status(401).json({ ok: false, error: 'invalid_password' });
+    return;
+  }
+
+  if (isOpen) {
+    isOpen = false;
+    io.emit('site-state', { open: false });
+    console.log('Site state changed to CLOSED');
+  }
+
+  res.json({ ok: true, open: false });
+});
+
+
 app.post('/claim', (req, res) => {
+  if (!isOpen) {
+    res.status(503).json({ ok: false, error: 'site_closed' });
+    return;
+  }
+
   const deviceId = typeof req.body?.deviceId === 'string' ? req.body.deviceId.trim() : '';
   if (!deviceId) {
     res.status(400).json({ ok: false, error: 'invalid_device' });
@@ -200,10 +271,48 @@ function isTokenClaimed(token) {
   return false;
 }
 
+function isAdminTogglePath(req) {
+  const pathname = typeof req.path === 'string' ? req.path : '';
+  return pathname === '/admin/open' || pathname === '/admin/close';
+}
+
+function isAllowedWhileClosed(req) {
+  const method = typeof req.method === 'string' ? req.method.toUpperCase() : 'GET';
+  if (method !== 'GET' && method !== 'HEAD') {
+    return false;
+  }
+
+  const pathname = typeof req.path === 'string' ? req.path : '';
+  if (pathname === '/holding.html' || pathname === '/styles.css') {
+    return true;
+  }
+  if (pathname.startsWith('/images/')) {
+    return true;
+  }
+  if (pathname.startsWith('/public/')) {
+    return true;
+  }
+  if (pathname.startsWith('/favicon')) {
+    return true;
+  }
+  return false;
+}
+
 initialiseCounts();
 loadStateFromDisk();
 
+io.use((socket, next) => {
+  if (!isOpen) {
+    const error = new Error('site_closed');
+    error.data = { error: 'site_closed' };
+    next(error);
+    return;
+  }
+  next();
+});
+
 io.on('connection', (socket) => {
+  socket.emit('site-state', { open: isOpen });
   socket.emit('stats', getStatsPayload());
 
   socket.on('vote', (payload = {}, respond) => {
@@ -211,6 +320,11 @@ io.on('connection', (socket) => {
     const token = typeof payload.token === 'string' ? payload.token.trim() : '';
     const numericChoice = Number(payload.choice);
     const socketIp = socket.handshake.address;
+
+    if (!isOpen) {
+      ack({ ok: false, error: 'site_closed' });
+      return;
+    }
 
     if (recordSocketVoteAttempt(socket.id)) {
       ack({ ok: false, error: 'rate_limited' });

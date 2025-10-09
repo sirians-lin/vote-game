@@ -1,5 +1,6 @@
 ﻿(() => {
     const TOTAL_OPTIONS = 20;
+    const HOLDING_PATH = '/holding.html';
     const STORAGE_KEYS = {
         deviceId: 'realtime-vote-device-id',
         token: 'realtime-vote-token',
@@ -21,6 +22,7 @@
     let pendingChoice = null;
     let tokenRequest = null;
     let tokenExhausted = false;
+    let siteClosed = false;
 
     getOrCreateDeviceId();
 
@@ -52,6 +54,7 @@
 
     socket.on('voteCounts', handleStatsPayload);
     socket.on('stats', handleStatsPayload);
+    socket.on('site-state', handleSiteStateChange);
 
     socket.on('locked', () => {
         locked = true;
@@ -85,16 +88,47 @@
     });
 
     socket.on('disconnect', () => {
+        if (siteClosed) {
+            return;
+        }
         if (!locked) {
-            statusMessage.textContent = '連線中斷，請確認網路狀態。';
+            statusMessage.textContent = '連線暫時中斷，系統會自動重試。';
         }
     });
 
-    socket.on('connect_error', () => {
-        if (!locked) {
-            statusMessage.textContent = '無法連線，系統將稍後重試。';
+    socket.on('connect_error', (error) => {
+        if (error && error.data && error.data.error === 'site_closed') {
+            handleSiteClosed();
+            return;
+        }
+
+        if (!locked && !siteClosed) {
+            statusMessage.textContent = '無法連線，稍後將自動重試。';
         }
     });
+
+    function handleSiteStateChange(payload = {}) {
+        if (!payload || typeof payload !== 'object') {
+            return;
+        }
+
+        if (payload.open === false) {
+            handleSiteClosed();
+        } else if (payload.open === true) {
+            siteClosed = false;
+        }
+    }
+
+    function handleSiteClosed() {
+        if (siteClosed) {
+            return;
+        }
+        siteClosed = true;
+        if (statusMessage) {
+            statusMessage.textContent = '站台暫未開放，請稍後再試。';
+        }
+        window.location.href = HOLDING_PATH;
+    }
 
     function handleStatsPayload(payload = {}) {
         if (!payload || typeof payload !== 'object') {
@@ -394,18 +428,30 @@
             body: JSON.stringify({ deviceId })
         })
             .then(async (response) => {
+                const payload = await response.json().catch(() => ({}));
+
                 if (!response.ok) {
                     if (response.status === 409) {
                         tokenExhausted = true;
-                        if (!locked) {
-                            statusMessage.textContent = '票券已用完，本輪暫無名額。';
+                        if (!locked && !siteClosed) {
+                            statusMessage.textContent = '本輪票券已用罄，請稍候補發。';
                         }
                         return null;
                     }
+
+                    if (payload && payload.error === 'site_closed') {
+                        handleSiteClosed();
+                        return null;
+                    }
+
+                    if (response.status === 503) {
+                        handleSiteClosed();
+                        return null;
+                    }
+
                     throw new Error('claim_failed');
                 }
 
-                const payload = await response.json();
                 if (payload && typeof payload.token === 'string' && payload.token) {
                     tokenExhausted = false;
                     localStorage.setItem(STORAGE_KEYS.token, payload.token);
@@ -415,11 +461,11 @@
                 throw new Error('invalid_payload');
             })
             .catch((error) => {
-                if (!locked) {
+                if (!locked && !siteClosed) {
                     if (error && error.message === 'claim_failed') {
-                        statusMessage.textContent = '領取票券失敗，請稍後再試。';
+                        statusMessage.textContent = '取得投票資格失敗，請稍後再試。';
                     } else if (!tokenExhausted) {
-                        statusMessage.textContent = '無法取得票券，請稍後再試。';
+                        statusMessage.textContent = '目前無法取得票券，請稍候。';
                     }
                 }
                 return null;
@@ -453,4 +499,7 @@
         });
     }
 })();
+
+
+
 
