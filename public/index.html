@@ -33,6 +33,12 @@
         <h2>管理員區</h2>
         <p class="admin-hint">此區僅供授課老師使用。請輸入管理密碼後可重置統計。</p>
         <button type="button" id="resetVotesButton" class="admin-reset-button">重置投票結果</button>
+        <div class="admin-inline">
+            <input type="password" id="adminPwdOpenClose" placeholder="管理密碼" />
+            <button type="button" id="btnOpenSite" class="admin-toggle-button">開站</button>
+            <button type="button" id="btnCloseSite" class="admin-toggle-button">關站</button>
+            <p id="siteStateMsg" aria-live="polite"></p>
+        </div>
         <p id="adminStatus" class="admin-status" aria-live="polite"></p>
     </section>
 

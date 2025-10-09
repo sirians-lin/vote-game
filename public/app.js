@@ -14,6 +14,10 @@
     const adminControls = document.getElementById('adminControls');
     const adminResetButton = document.getElementById('resetVotesButton');
     const adminStatus = document.getElementById('adminStatus');
+    const adminPwdOpenClose = document.getElementById('adminPwdOpenClose');
+    const btnOpenSite = document.getElementById('btnOpenSite');
+    const btnCloseSite = document.getElementById('btnCloseSite');
+    const siteStateMsg = document.getElementById('siteStateMsg');
 
     const socket = io();
 
@@ -113,9 +117,11 @@
         }
 
         if (payload.open === false) {
+            setSiteStateMessage('站台已關閉');
             handleSiteClosed();
         } else if (payload.open === true) {
             siteClosed = false;
+            setSiteStateMessage('站台已開啟');
         }
     }
 
@@ -124,6 +130,7 @@
             return;
         }
         siteClosed = true;
+        setSiteStateMessage('站台已關閉');
         if (statusMessage) {
             statusMessage.textContent = '站台暫未開放，請稍後再試。';
         }
@@ -375,7 +382,16 @@
             adminResetButton.addEventListener('click', handleAdminReset);
         }
 
+        if (btnOpenSite) {
+            btnOpenSite.addEventListener('click', () => toggleSiteState(true));
+        }
+
+        if (btnCloseSite) {
+            btnCloseSite.addEventListener('click', () => toggleSiteState(false));
+        }
+
         setAdminStatus('');
+        setSiteStateMessage('');
     }
 
     function setAdminStatus(message) {
@@ -383,6 +399,84 @@
             adminStatus.textContent = message || '';
         }
     }
+
+    function toggleSiteState(shouldOpen) {
+        if (!btnOpenSite && !btnCloseSite) {
+            return;
+        }
+
+        const password = adminPwdOpenClose ? adminPwdOpenClose.value.trim() : '';
+        if (!password) {
+            setSiteStateMessage('請輸入管理密碼', true);
+            return;
+        }
+
+        setSiteStateMessage('處理中…');
+        setToggleButtonsDisabled(true);
+
+        const endpoint = shouldOpen ? '/admin/open' : '/admin/close';
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        })
+            .then(async (response) => {
+                const payload = await response.json().catch(() => ({}));
+
+                if (response.ok && payload && payload.ok) {
+                    if (adminPwdOpenClose) {
+                        adminPwdOpenClose.value = '';
+                    }
+                    if (payload.open === true) {
+                        siteClosed = false;
+                        setSiteStateMessage('站台已開啟');
+                    } else if (payload.open === false) {
+                        setSiteStateMessage('站台已關閉');
+                    } else {
+                        setSiteStateMessage(shouldOpen ? '站台已開啟' : '站台已關閉');
+                    }
+                    return;
+                }
+
+                if (payload && payload.error === 'invalid_password') {
+                    setSiteStateMessage('密碼不正確', true);
+                    return;
+                }
+
+                setSiteStateMessage('操作失敗，請稍後再試。', true);
+            })
+            .catch(() => {
+                setSiteStateMessage('連線失敗，請稍後再試。', true);
+            })
+            .finally(() => {
+                setToggleButtonsDisabled(false);
+            });
+    }
+
+    function setToggleButtonsDisabled(disabled) {
+        if (btnOpenSite) {
+            btnOpenSite.disabled = disabled;
+        }
+        if (btnCloseSite) {
+            btnCloseSite.disabled = disabled;
+        }
+    }
+
+    function setSiteStateMessage(message, isError = false) {
+        if (!siteStateMsg) {
+            return;
+        }
+        siteStateMsg.textContent = message || '';
+        if (isError) {
+            siteStateMsg.dataset.state = 'error';
+        } else {
+            delete siteStateMsg.dataset.state;
+        }
+    }
+
     function loadStoredChoice() {
         return localStorage.getItem(STORAGE_KEYS.choice);
     }
